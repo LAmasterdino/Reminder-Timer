@@ -6,266 +6,374 @@
   <title>Intervall-Benachrichtigungen</title>
 
   <style>
-    :root {
-      --bg: #0f172a;
-      --card: rgba(255, 255, 255, 0.08);
-      --border: rgba(255, 255, 255, 0.15);
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --radius: 16px;
+    :root{
+      --bg:#0f172a; --card:rgba(255,255,255,0.08); --border:rgba(255,255,255,0.15);
+      --text:#e5e7eb; --muted:#94a3b8; --primary:#6366f1; --danger:#ef4444; --radius:14px;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    }
-
-    body {
-      min-height: 100vh;
-      background: radial-gradient(circle at top, #1e293b, #020617);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 760px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-    }
-
-    h1 { margin-bottom: 10px; }
-
-    label { display:block; font-weight:600; margin: 16px 0 6px; }
-
-    input, select {
-      width:100%;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,0.06);
-      color:var(--text);
-    }
-
-    .row {
-      display:grid;
-      grid-template-columns: repeat(auto-fit,minmax(120px,1fr));
-      gap:10px;
-    }
-
-    .days {
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:8px;
-    }
-
-    .days label {
-      font-weight:500;
-      background:rgba(255,255,255,0.06);
-      padding:6px 10px;
-      border-radius:10px;
-      cursor:pointer;
-    }
-
-    button {
-      padding:12px 16px;
-      border-radius:12px;
-      border:none;
-      font-weight:600;
-      cursor:pointer;
-      margin-top:16px;
-    }
-
-    #startBtn { background: var(--primary); color:white; }
-    #stopBtn { background: var(--danger); color:white; }
-
-    .status-card {
-      margin-top:20px;
-      padding:16px;
-      background:rgba(255,255,255,0.06);
-      border-radius:12px;
-      border:1px solid var(--border);
-    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+    body{min-height:100vh;background:radial-gradient(circle at top,#1e293b,#020617);color:var(--text);
+      display:flex;align-items:center;justify-content:center;padding:24px}
+    .app{width:100%;max-width:760px;background:var(--card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:28px;backdrop-filter:blur(12px);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+    h1{margin-bottom:8px}
+    .desc{color:var(--muted);margin-bottom:14px}
+    label{display:block;font-weight:600;margin:12px 0 6px}
+    input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);
+      background:rgba(255,255,255,0.04);color:var(--text);font-size:0.95rem}
+    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+    .days{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .days label{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.04)}
+    button.primary{background:var(--primary);color:#fff;border:none}
+    button.danger{background:var(--danger);color:#fff;border:none}
+    .status{margin-top:18px;padding:14px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid var(--border)}
+    @media(max-width:520px){ .row{grid-template-columns:1fr} }
   </style>
 </head>
-
 <body>
-<div class="app">
-  <h1>🔔 Intervall-Benachrichtigungen</h1>
+  <div class="app">
+    <h1>🔔 Intervall-Benachrichtigungen</h1>
+    <p class="desc">Wähle Intervall, Startdatum oder bestimmte Wochentage für wiederkehrende Erinnerungen.</p>
 
-  <label>Modus wählen</label>
-  <select id="mode">
-    <option value="interval">Einfaches Intervall</option>
-    <option value="repeat">Alle X Tage / Wochen</option>
-    <option value="weekdays">Bestimmte Wochentage</option>
-  </select>
+    <label>Modus wählen</label>
+    <select id="mode">
+      <option value="interval">Einfaches Intervall</option>
+      <option value="repeat">Alle X Tage / Wochen</option>
+      <option value="weekdays">Bestimmte Wochentage</option>
+    </select>
 
-  <label>Nächstes Datum & Uhrzeit</label>
-  <input id="startDate" type="datetime-local">
+    <label>Nächstes Datum & Uhrzeit (optional)</label>
+    <input id="startDate" type="datetime-local" />
 
-  <div id="intervalBox">
-    <label>Intervall</label>
-    <div class="row">
-      <input id="num" type="number" min="1" value="1">
-      <select id="unit">
-        <option value="minutes">Minute(n)</option>
-        <option value="hours">Stunde(n)</option>
-        <option value="days">Tag(e)</option>
-        <option value="weeks">Woche(n)</option>
-      </select>
+    <div id="intervalBox">
+      <label>Intervall</label>
+      <div class="row">
+        <input id="num" type="number" min="1" value="1" />
+        <select id="unit">
+          <option value="minutes">Minute(n)</option>
+          <option value="hours">Stunde(n)</option>
+          <option value="days">Tag(e)</option>
+          <option value="weeks">Woche(n)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="repeatBox" style="display:none;">
+      <label>Alle X</label>
+      <div class="row">
+        <input id="repeatNum" type="number" min="1" value="1" />
+        <select id="repeatUnit">
+          <option value="days">Tage</option>
+          <option value="weeks">Wochen</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="weekdayBox" style="display:none;">
+      <label>Wochentage</label>
+      <div class="days" id="weekdayContainer">
+        <label><input type="checkbox" class="wd" value="1"> Mo</label>
+        <label><input type="checkbox" class="wd" value="2"> Di</label>
+        <label><input type="checkbox" class="wd" value="3"> Mi</label>
+        <label><input type="checkbox" class="wd" value="4"> Do</label>
+        <label><input type="checkbox" class="wd" value="5"> Fr</label>
+        <label><input type="checkbox" class="wd" value="6"> Sa</label>
+        <label><input type="checkbox" class="wd" value="0"> So</label>
+      </div>
+    </div>
+
+    <label>Titel</label>
+    <input id="title" type="text" value="Erinnerung" />
+
+    <label>Nachricht</label>
+    <input id="message" type="text" value="Das ist deine wiederkehrende Nachricht." />
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <button id="startBtn" class="primary">Start</button>
+      <button id="stopBtn" class="danger" disabled>Stop</button>
+    </div>
+
+    <div class="status">
+      <div><strong>Status:</strong> <span id="statustxt">Nicht gestartet</span></div>
+      <div style="color:var(--muted)">Nächste Ausführung: <span id="nextRun">—</span></div>
     </div>
   </div>
-
-  <div id="repeatBox" style="display:none;">
-    <label>Alle X</label>
-    <div class="row">
-      <input id="repeatNum" type="number" min="1" value="1">
-      <select id="repeatUnit">
-        <option value="days">Tage</option>
-        <option value="weeks">Wochen</option>
-      </select>
-    </div>
-  </div>
-
-  <div id="weekdayBox" style="display:none;">
-    <label>Wochentage</label>
-    <div class="days">
-      <label><input type="checkbox" value="1"> Mo</label>
-      <label><input type="checkbox" value="2"> Di</label>
-      <label><input type="checkbox" value="3"> Mi</label>
-      <label><input type="checkbox" value="4"> Do</label>
-      <label><input type="checkbox" value="5"> Fr</label>
-      <label><input type="checkbox" value="6"> Sa</label>
-      <label><input type="checkbox" value="0"> So</label>
-    </div>
-  </div>
-
-  <label>Titel</label>
-  <input id="title" type="text" value="Erinnerung">
-
-  <label>Nachricht</label>
-  <input id="message" type="text" value="Das ist deine Nachricht.">
-
-  <button id="startBtn">Start</button>
-  <button id="stopBtn" disabled>Stop</button>
-
-  <div class="status-card">
-    <div>Status: <span id="statustxt">Nicht gestartet</span></div>
-    <div>Nächste Ausführung: <span id="nextRun">—</span></div>
-  </div>
-</div>
 
 <script>
+/* ---------- Utilities ---------- */
 function msFromInterval(n, unit) {
-  const map = {minutes:60000, hours:3600000, days:86400000, weeks:604800000};
-  return Number(n) * map[unit];
+  n = Number(n) || 1;
+  switch (unit) {
+    case 'minutes': return n * 60 * 1000;
+    case 'hours': return n * 60 * 60 * 1000;
+    case 'days': return n * 24 * 60 * 60 * 1000;
+    case 'weeks': return n * 7 * 24 * 60 * 60 * 1000;
+    default: return n * 60 * 1000;
+  }
 }
 
-let timerId=null, nextTimeoutId=null, intervalMs=null, nextRun=null;
+/* ---------- State & DOM refs ---------- */
+let timerId = null;
+let nextTimeoutId = null;
+let intervalMs = null;
 
 const mode = document.getElementById('mode');
 const startDateInput = document.getElementById('startDate');
+
 const intervalBox = document.getElementById('intervalBox');
 const repeatBox = document.getElementById('repeatBox');
 const weekdayBox = document.getElementById('weekdayBox');
+
+const num = document.getElementById('num');
+const unit = document.getElementById('unit');
+
+const repeatNum = document.getElementById('repeatNum');
+const repeatUnit = document.getElementById('repeatUnit');
+
+const titleInput = document.getElementById('title');
+const messageInput = document.getElementById('message');
 
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const statustxt = document.getElementById('statustxt');
 const nextRunEl = document.getElementById('nextRun');
 
+const weekdayCheckboxes = Array.from(document.querySelectorAll('.wd'));
+
+/* ---------- UI: mode switch ---------- */
 mode.addEventListener('change', () => {
-  intervalBox.style.display = mode.value==='interval' ? 'block' : 'none';
-  repeatBox.style.display = mode.value==='repeat' ? 'block' : 'none';
-  weekdayBox.style.display = mode.value==='weekdays' ? 'block' : 'none';
+  intervalBox.style.display = mode.value === 'interval' ? 'block' : 'none';
+  repeatBox.style.display = mode.value === 'repeat' ? 'block' : 'none';
+  weekdayBox.style.display = mode.value === 'weekdays' ? 'block' : 'none';
 });
 
+/* ---------- Notification display (uses SW if available) ---------- */
 async function showNotification(title, body) {
-  if (Notification.permission !== 'granted') return;
-  new Notification(title,{body});
+  if (!('Notification' in window)) {
+    alert(title + "\n\n" + body);
+    return;
+  }
+  if (Notification.permission !== 'granted') {
+    console.warn('Permission not granted');
+    return;
+  }
+
+  // Prefer service worker if available and active
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      reg.showNotification(title, { body });
+      return;
+    } catch (e) {
+      // fallback
+    }
+  }
+  // Direct Notification
+  try {
+    new Notification(title, { body });
+  } catch (e) {
+    console.warn('Notification failed:', e);
+  }
 }
 
-function computeNextRun() {
-  let base = startDateInput.value ? new Date(startDateInput.value).getTime() : Date.now();
+/* ---------- Compute next run time based on mode ---------- */
+function computeNextRun(fromTs = null) {
+  const baseTs = fromTs ? Number(fromTs) : (startDateInput.value ? new Date(startDateInput.value).getTime() : Date.now());
 
   if (mode.value === 'interval') {
     intervalMs = msFromInterval(num.value, unit.value);
-    return base + intervalMs;
+    // next run after base
+    return baseTs + intervalMs;
   }
 
   if (mode.value === 'repeat') {
-    const n = document.getElementById('repeatNum').value;
-    const u = document.getElementById('repeatUnit').value;
-    intervalMs = msFromInterval(n, u);
-    return base + intervalMs;
+    intervalMs = msFromInterval(repeatNum.value, repeatUnit.value);
+    return baseTs + intervalMs;
   }
 
   if (mode.value === 'weekdays') {
-    const days = [...document.querySelectorAll('#weekdayBox input:checked')]
-      .map(cb => Number(cb.value));
-
-    if (!days.length) return null;
-
-    let d = new Date(base);
-    for (let i=0;i<14;i++) {
-      d.setDate(d.getDate()+1);
-      if (days.includes(d.getDay())) return d.getTime();
+    const selected = weekdayCheckboxes.filter(cb => cb.checked).map(cb => Number(cb.value));
+    if (!selected.length) return null;
+    // Start searching at baseTs (include base day if time later than base time)
+    let d = new Date(baseTs);
+    // If startDate provided and its weekday is allowed and time >= base, accept base as next
+    // Otherwise search forward up to 14 days
+    for (let i = 0; i < 14; i++) {
+      if (selected.includes(d.getDay()) && d.getTime() > Date.now()) {
+        return d.getTime();
+      }
+      // advance by 1 day, keep same time-of-day as base
+      d.setDate(d.getDate() + 1);
     }
+    return null;
   }
+
+  return null;
 }
 
-function schedule(runAt) {
+/* ---------- Scheduler ---------- */
+function schedule(runAtTs) {
   clearTimeout(nextTimeoutId);
-  const ms = runAt - Date.now();
-  if (ms <= 0) return;
-  localStorage.setItem('nextRun', runAt);
-  nextRunEl.textContent = new Date(runAt).toLocaleString();
+
+  if (!runAtTs) {
+    console.warn('Kein gültiger nächster Zeitpunkt');
+    return;
+  }
+
+  const ms = runAtTs - Date.now();
+  localStorage.setItem('nextRun', String(runAtTs));
+  nextRunEl.textContent = new Date(runAtTs).toLocaleString();
+
+  if (ms <= 0) {
+    // If time already passed => trigger immediately and compute next
+    (async () => {
+      await showNotification(titleInput.value, messageInput.value);
+      const next = computeNextRun();
+      if (next) schedule(next);
+    })();
+    return;
+  }
 
   nextTimeoutId = setTimeout(async () => {
-    await showNotification(title.value, message.value);
-    const next = computeNextRun();
-    if (next) schedule(next);
+    await showNotification(titleInput.value, messageInput.value);
+
+    // After firing, compute and schedule the next occurrence according to mode:
+    if (mode.value === 'interval' || mode.value === 'repeat') {
+      // for simple intervals just schedule next at now + intervalMs
+      if (!intervalMs) {
+        // compute interval if not set
+        intervalMs = msFromInterval(
+          mode.value === 'interval' ? num.value : repeatNum.value,
+          mode.value === 'interval' ? unit.value : repeatUnit.value
+        );
+      }
+      const next = Date.now() + intervalMs;
+      schedule(next);
+    } else if (mode.value === 'weekdays') {
+      // For weekdays, compute next occurrence from now
+      const next = computeNextRun(Date.now());
+      if (next) schedule(next);
+    }
   }, ms);
 }
 
-startBtn.onclick = async () => {
+/* ---------- Start / Stop ---------- */
+startBtn.addEventListener('click', async () => {
+  if (!('Notification' in window)) {
+    alert('Dein Browser unterstützt keine Web Notifications.');
+    return;
+  }
   if (Notification.permission !== 'granted') {
-    const p = await Notification.requestPermission();
-    if (p !== 'granted') return alert('Benachrichtigungen verweigert');
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      alert('Benachrichtigungen wurden abgelehnt.');
+      return;
+    }
+  }
+
+  // Validate weekdays mode selection
+  if (mode.value === 'weekdays' && weekdayCheckboxes.every(cb => !cb.checked)) {
+    alert('Bitte mindestens einen Wochentag auswählen.');
+    return;
   }
 
   const next = computeNextRun();
-  if (!next) return alert('Bitte gültige Einstellungen wählen');
+  if (!next) {
+    alert('Bitte gültige Einstellungen wählen (z. B. Startzeit setzen oder Wochentag auswählen).');
+    return;
+  }
 
   schedule(next);
+
+  // persist small cfg
+  const cfg = {
+    mode: mode.value,
+    startDate: startDateInput.value || '',
+    num: num.value, unit: unit.value,
+    repeatNum: repeatNum.value, repeatUnit: repeatUnit.value,
+    weekdays: weekdayCheckboxes.filter(cb=>cb.checked).map(cb=>cb.value),
+    title: titleInput.value, message: messageInput.value,
+    started: true
+  };
+  localStorage.setItem('notifyCfg', JSON.stringify(cfg));
 
   statustxt.textContent = 'Aktiv';
   startBtn.disabled = true;
   stopBtn.disabled = false;
-};
+});
 
-stopBtn.onclick = () => {
+stopBtn.addEventListener('click', () => {
   clearTimeout(nextTimeoutId);
-  localStorage.clear();
+  if (timerId) clearInterval(timerId);
+  timerId = null;
+  nextTimeoutId = null;
+  localStorage.removeItem('notifyCfg');
+  localStorage.removeItem('nextRun');
   statustxt.textContent = 'Gestoppt';
   nextRunEl.textContent = '—';
   startBtn.disabled = false;
   stopBtn.disabled = true;
-};
+});
+
+/* ---------- Restore on load ---------- */
+window.addEventListener('load', () => {
+  // SW registration (optional)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('Service Worker registriert:', reg.scope);
+    }).catch(err => {
+      console.warn('SW Registrierung fehlgeschlagen:', err);
+    });
+  }
+
+  const cfgStr = localStorage.getItem('notifyCfg');
+  if (!cfgStr) return;
+  try {
+    const cfg = JSON.parse(cfgStr);
+    mode.value = cfg.mode || mode.value;
+    startDateInput.value = cfg.startDate || startDateInput.value;
+    num.value = cfg.num || num.value;
+    unit.value = cfg.unit || unit.value;
+    repeatNum.value = cfg.repeatNum || repeatNum.value;
+    repeatUnit.value = cfg.repeatUnit || repeatUnit.value;
+    titleInput.value = cfg.title || titleInput.value;
+    messageInput.value = cfg.message || messageInput.value;
+    // restore weekdays
+    if (cfg.weekdays && Array.isArray(cfg.weekdays)) {
+      weekdayCheckboxes.forEach(cb => { cb.checked = cfg.weekdays.includes(cb.value); });
+    }
+
+    // show correct UI panels
+    mode.dispatchEvent(new Event('change'));
+
+    // restore scheduling
+    const next = Number(localStorage.getItem('nextRun')) || 0;
+    if (next > Date.now()) schedule(next);
+    else {
+      const recomputed = computeNextRun();
+      if (recomputed) schedule(recomputed);
+    }
+
+    statustxt.textContent = 'Aktiv (wiederhergestellt)';
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+  } catch (e) { console.warn('Restore fehlgeschlagen', e); }
+});
+
+/* ---------- Visibility handling (re-schedule if needed) ---------- */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    const cfgStr = localStorage.getItem('notifyCfg');
+    if (!cfgStr) return;
+    const next = Number(localStorage.getItem('nextRun')) || 0;
+    if (next <= Date.now()) {
+      const recomputed = computeNextRun();
+      if (recomputed) schedule(recomputed);
+    } else {
+      // ensure UI text is up-to-date
+      nextRunEl.textContent = new Date(next).toLocaleString();
+    }
+  }
+});
 </script>
 </body>
 </html>
