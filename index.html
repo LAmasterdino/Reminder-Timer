@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Intervall-Benachrichtigungen</title>
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.15);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1e293b, #020617);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 760px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    h1 { margin-bottom: 10px; }
+
+    label { display:block; font-weight:600; margin: 16px 0 6px; }
+
+    input, select {
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.06);
+      color:var(--text);
+    }
+
+    .row {
+      display:grid;
+      grid-template-columns: repeat(auto-fit,minmax(120px,1fr));
+      gap:10px;
+    }
+
+    .days {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+
+    .days label {
+      font-weight:500;
+      background:rgba(255,255,255,0.06);
+      padding:6px 10px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    button {
+      padding:12px 16px;
+      border-radius:12px;
+      border:none;
+      font-weight:600;
+      cursor:pointer;
+      margin-top:16px;
+    }
+
+    #startBtn { background: var(--primary); color:white; }
+    #stopBtn { background: var(--danger); color:white; }
+
+    .status-card {
+      margin-top:20px;
+      padding:16px;
+      background:rgba(255,255,255,0.06);
+      border-radius:12px;
+      border:1px solid var(--border);
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <h1>🔔 Intervall-Benachrichtigungen</h1>
+
+  <label>Modus wählen</label>
+  <select id="mode">
+    <option value="interval">Einfaches Intervall</option>
+    <option value="repeat">Alle X Tage / Wochen</option>
+    <option value="weekdays">Bestimmte Wochentage</option>
+  </select>
+
+  <label>Nächstes Datum & Uhrzeit</label>
+  <input id="startDate" type="datetime-local">
+
+  <div id="intervalBox">
+    <label>Intervall</label>
+    <div class="row">
+      <input id="num" type="number" min="1" value="1">
+      <select id="unit">
+        <option value="minutes">Minute(n)</option>
+        <option value="hours">Stunde(n)</option>
+        <option value="days">Tag(e)</option>
+        <option value="weeks">Woche(n)</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="repeatBox" style="display:none;">
+    <label>Alle X</label>
+    <div class="row">
+      <input id="repeatNum" type="number" min="1" value="1">
+      <select id="repeatUnit">
+        <option value="days">Tage</option>
+        <option value="weeks">Wochen</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="weekdayBox" style="display:none;">
+    <label>Wochentage</label>
+    <div class="days">
+      <label><input type="checkbox" value="1"> Mo</label>
+      <label><input type="checkbox" value="2"> Di</label>
+      <label><input type="checkbox" value="3"> Mi</label>
+      <label><input type="checkbox" value="4"> Do</label>
+      <label><input type="checkbox" value="5"> Fr</label>
+      <label><input type="checkbox" value="6"> Sa</label>
+      <label><input type="checkbox" value="0"> So</label>
+    </div>
+  </div>
+
+  <label>Titel</label>
+  <input id="title" type="text" value="Erinnerung">
+
+  <label>Nachricht</label>
+  <input id="message" type="text" value="Das ist deine Nachricht.">
+
+  <button id="startBtn">Start</button>
+  <button id="stopBtn" disabled>Stop</button>
+
+  <div class="status-card">
+    <div>Status: <span id="statustxt">Nicht gestartet</span></div>
+    <div>Nächste Ausführung: <span id="nextRun">—</span></div>
+  </div>
+</div>
+
+<script>
+function msFromInterval(n, unit) {
+  const map = {minutes:60000, hours:3600000, days:86400000, weeks:604800000};
+  return Number(n) * map[unit];
+}
+
+let timerId=null, nextTimeoutId=null, intervalMs=null, nextRun=null;
+
+const mode = document.getElementById('mode');
+const startDateInput = document.getElementById('startDate');
+const intervalBox = document.getElementById('intervalBox');
+const repeatBox = document.getElementById('repeatBox');
+const weekdayBox = document.getElementById('weekdayBox');
+
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const statustxt = document.getElementById('statustxt');
+const nextRunEl = document.getElementById('nextRun');
+
+mode.addEventListener('change', () => {
+  intervalBox.style.display = mode.value==='interval' ? 'block' : 'none';
+  repeatBox.style.display = mode.value==='repeat' ? 'block' : 'none';
+  weekdayBox.style.display = mode.value==='weekdays' ? 'block' : 'none';
+});
+
+async function showNotification(title, body) {
+  if (Notification.permission !== 'granted') return;
+  new Notification(title,{body});
+}
+
+function computeNextRun() {
+  let base = startDateInput.value ? new Date(startDateInput.value).getTime() : Date.now();
+
+  if (mode.value === 'interval') {
+    intervalMs = msFromInterval(num.value, unit.value);
+    return base + intervalMs;
+  }
+
+  if (mode.value === 'repeat') {
+    const n = document.getElementById('repeatNum').value;
+    const u = document.getElementById('repeatUnit').value;
+    intervalMs = msFromInterval(n, u);
+    return base + intervalMs;
+  }
+
+  if (mode.value === 'weekdays') {
+    const days = [...document.querySelectorAll('#weekdayBox input:checked')]
+      .map(cb => Number(cb.value));
+
+    if (!days.length) return null;
+
+    let d = new Date(base);
+    for (let i=0;i<14;i++) {
+      d.setDate(d.getDate()+1);
+      if (days.includes(d.getDay())) return d.getTime();
+    }
+  }
+}
+
+function schedule(runAt) {
+  clearTimeout(nextTimeoutId);
+  const ms = runAt - Date.now();
+  if (ms <= 0) return;
+  localStorage.setItem('nextRun', runAt);
+  nextRunEl.textContent = new Date(runAt).toLocaleString();
+
+  nextTimeoutId = setTimeout(async () => {
+    await showNotification(title.value, message.value);
+    const next = computeNextRun();
+    if (next) schedule(next);
+  }, ms);
+}
+
+startBtn.onclick = async () => {
+  if (Notification.permission !== 'granted') {
+    const p = await Notification.requestPermission();
+    if (p !== 'granted') return alert('Benachrichtigungen verweigert');
+  }
+
+  const next = computeNextRun();
+  if (!next) return alert('Bitte gültige Einstellungen wählen');
+
+  schedule(next);
+
+  statustxt.textContent = 'Aktiv';
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+};
+
+stopBtn.onclick = () => {
+  clearTimeout(nextTimeoutId);
+  localStorage.clear();
+  statustxt.textContent = 'Gestoppt';
+  nextRunEl.textContent = '—';
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+};
+</script>
+</body>
+</html>
